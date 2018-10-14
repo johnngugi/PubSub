@@ -1,14 +1,12 @@
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.jivesoftware.smackx.pubsub.ItemPublishEvent;
-import org.jivesoftware.smackx.pubsub.LeafNode;
-import org.jivesoftware.smackx.pubsub.PayloadItem;
-import org.jivesoftware.smackx.pubsub.PubSubManager;
+import org.jivesoftware.smackx.pubsub.*;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.List;
 
 public class Subscriber implements ItemEventListener {
     private AbstractXMPPConnection conn;
@@ -29,23 +27,36 @@ public class Subscriber implements ItemEventListener {
         conn.connect().login();
     }
 
-    public void receive() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
-            InterruptedException, SmackException.NoResponseException {
-        // Create a pubsub manager using an existing XMPPConnection
-        PubSubManager pubSubManager = PubSubManager.getInstance(conn);
-
-        LeafNode eventNode = pubSubManager.getNode("testNode");
-        eventNode.addItemEventListener(this);
-        eventNode.subscribe(String.valueOf(conn.getUser()));
-        while (true);
+    private void subscribe() {
+        try {
+            if (conn != null) {
+                PubSubManager pubSubManager = PubSubManager.getInstance(conn);
+                LeafNode eventNode = pubSubManager.getNode("testNode");
+                eventNode.addItemEventListener(this);
+                List<Subscription> subscriptions = eventNode.getSubscriptions();
+                if (subscriptions.size() == 0) {
+                    eventNode.subscribe(String.valueOf(conn.getUser()));
+                } else {
+                    for (Subscription subscription : subscriptions) {
+                        Subscription.State state = subscription.getState();
+                        System.out.println(subscription.toXML());
+                        if (state != Subscription.State.subscribed) {
+                            eventNode.subscribe(String.valueOf(conn.getUser()));
+                        }
+                    }
+                }
+            }
+        } catch (InterruptedException | XMPPException | SmackException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void handlePublishedItems(ItemPublishEvent itemPublishEvent) {
 //        System.out.println("Item count: " + itemPublishEvent);
-        for (Object obj: itemPublishEvent.getItems()) {
+        for (Object obj : itemPublishEvent.getItems()) {
             PayloadItem item = (PayloadItem) obj;
-            System.out.println("Payload: " + item.getPayload().toString() );
+            System.out.println("Payload: " + item.getPayload().toString());
         }
     }
 
@@ -58,7 +69,7 @@ public class Subscriber implements ItemEventListener {
         try {
             subscriber = new Subscriber();
             subscriber.connect();
-            subscriber.receive();
+            subscriber.subscribe();
         } catch (InterruptedException | XMPPException | SmackException | IOException e) {
             e.printStackTrace();
         }

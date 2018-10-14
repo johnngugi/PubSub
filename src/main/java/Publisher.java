@@ -1,7 +1,4 @@
-import org.jivesoftware.smack.AbstractXMPPConnection;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.pubsub.*;
@@ -14,10 +11,11 @@ public class Publisher {
     private AbstractXMPPConnection conn;
 
     public void connect() throws InterruptedException, XMPPException, SmackException, IOException {
-        InetAddress hostAddress = InetAddress.getByName("192.168.100.2");
+        InetAddress hostAddress = InetAddress.getByName("127.0.0.1");
         // Create a connection to the jabber.org server on a specific port.
+        SmackConfiguration.DEBUG = true;
         XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                .setUsernameAndPassword("student1", "password")
+                .setUsernameAndPassword("student2", "password")
                 .setXmppDomain("strathmore-computer")
                 .setHostAddress(hostAddress)
                 .setPort(5222)
@@ -38,19 +36,19 @@ public class Publisher {
         form.setDeliverPayloads(true);                 //allow payloads with notif
         form.setPersistentItems(true);                  //save published items in storage @ server
         form.setPresenceBasedDelivery(false);          //notify subscribers even when they are offline
-        form.setPublishModel(PublishModel.open);       //only publishers (owner) can post items to this node
-//        form.setNodeType(NodeType.collection);
-//        form.setChildrenAssociationPolicy(ChildrenAssociationPolicy.all);
-//        form.setChildrenMax(65536);
+        form.setPublishModel(PublishModel.publishers);       //only publishers (owner) can post items to this node
 
-//        LeafNode leafNode = (LeafNode) pubSubManager.createNode("testNode", form);
-//        Item item = new PayloadItem<>("message", payload);
+        LeafNode leafNode = null;
         String msg = "Test2";
         String xmlMsg = "<message xmlns='pubsub:test:test'><body>" + msg + "</body></message>";
         SimplePayload payload = new SimplePayload(
                 "test", "pubsub:test:test", xmlMsg);
         PayloadItem<SimplePayload> item = new PayloadItem<>("5", payload);
-        LeafNode leafNode = pubSubManager.getNode("testNode");
+        try {
+            leafNode = pubSubManager.getNode("testNode");
+        } catch (XMPPException.XMPPErrorException e) {
+            leafNode = (LeafNode) pubSubManager.createNode("testNode", form);
+        }
         leafNode.publish(item);
     }
 
