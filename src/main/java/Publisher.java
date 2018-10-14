@@ -22,23 +22,24 @@ public class Publisher {
 
         ConfigureForm form = new ConfigureForm(DataForm.Type.submit);
         form.setAccessModel(AccessModel.open);          //anyone can access
-        form.setDeliverPayloads(true);                 //allow payloads with notif
+        form.setDeliverPayloads(true);                 //allow payloads with notifications
         form.setPersistentItems(true);                  //save published items in storage @ server
         form.setPresenceBasedDelivery(false);          //notify subscribers even when they are offline
         form.setPublishModel(PublishModel.publishers);       //only publishers (owner) can post items to this node
 
         LeafNode leafNode;
-        String msg = "Test5";
+        String msg = "Test7";
         Message message = new Message();
         message.setStanzaId();
         message.setSubject("Test");
         message.setBody(msg);
-        SimplePayload payload = new SimplePayload(
-                null, null, message.toXML());
-        PayloadItem<SimplePayload> item = new PayloadItem<>(payload);
+
+//        String xmlMsg = "<message xmlns='pubsub:test:test'>" + msg + "</message>";
+        SimplePayload payload = new SimplePayload(message.toXML("").toString());
+        PayloadItem<SimplePayload> item = new PayloadItem<>("5", payload);
         try {
             leafNode = pubSubManager.getNode("testNode");
-        } catch (XMPPException.XMPPErrorException e) {
+        } catch (XMPPException.XMPPErrorException | PubSubException.NotAPubSubNodeException e) {
             leafNode = (LeafNode) pubSubManager.createNode("testNode", form);
         }
         leafNode.publish(item);

@@ -17,6 +17,7 @@ class Util {
                 .setXmppDomain("strathmore-computer")
                 .setHostAddress(hostAddress)
                 .setPort(5222)
+                .setResource("strathmore-student")
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .build();
 

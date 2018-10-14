@@ -3,6 +3,9 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.pubsub.*;
 import org.jivesoftware.smackx.pubsub.listener.ItemEventListener;
+import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityFullJid;
+import org.jxmpp.jid.Jid;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -23,19 +26,21 @@ public class Subscriber implements ItemEventListener {
                 LeafNode eventNode = pubSubManager.getNode("testNode");
                 eventNode.addItemEventListener(this);
                 List<Subscription> subscriptions = eventNode.getSubscriptions();
+                System.out.println("User: " + conn.getUser());
                 if (subscriptions.size() == 0) {
                     eventNode.subscribe(String.valueOf(conn.getUser()));
                 } else {
                     for (Subscription subscription : subscriptions) {
+                        System.out.println(subscription.toXML(""));
+                        Jid jid = subscription.getJid();
+                        EntityFullJid userJid = conn.getUser();
                         Subscription.State state = subscription.getState();
-                        System.out.println(subscription.toXML());
-                        if (state != Subscription.State.subscribed) {
-                            eventNode.subscribe(String.valueOf(conn.getUser()));
+                        if (userJid == jid && state != Subscription.State.subscribed) {
+                            eventNode.subscribe(String.valueOf(userJid));
                         }
                     }
                 }
             }
-            while (true);
         } catch (InterruptedException | XMPPException | SmackException e) {
             e.printStackTrace();
         }
