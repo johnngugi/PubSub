@@ -1,32 +1,21 @@
-import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.tcp.XMPPTCPConnection;
-import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smack.AbstractXMPPConnection;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smackx.pubsub.*;
 import org.jivesoftware.smackx.xdata.packet.DataForm;
 
 import java.io.IOException;
-import java.net.InetAddress;
 
 public class Publisher {
     private AbstractXMPPConnection conn;
 
-    public void connect() throws InterruptedException, XMPPException, SmackException, IOException {
-        InetAddress hostAddress = InetAddress.getByName("127.0.0.1");
-        // Create a connection to the jabber.org server on a specific port.
-        SmackConfiguration.DEBUG = true;
-        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                .setUsernameAndPassword("student2", "password")
-                .setXmppDomain("strathmore-computer")
-                .setHostAddress(hostAddress)
-                .setPort(5222)
-                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
-                .build();
-
-        conn = new XMPPTCPConnection(config);
-        conn.connect().login();
+    private Publisher(String username, String password)
+            throws InterruptedException, IOException, SmackException, XMPPException {
+        conn = Util.connect(username, password);
     }
 
-    public void publish() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
+    private void publish() throws XMPPException.XMPPErrorException, SmackException.NotConnectedException,
             InterruptedException, SmackException.NoResponseException {
         // Create a pubsub manager using an existing XMPPConnection
         PubSubManager pubSubManager = PubSubManager.getInstance(conn);
@@ -38,12 +27,15 @@ public class Publisher {
         form.setPresenceBasedDelivery(false);          //notify subscribers even when they are offline
         form.setPublishModel(PublishModel.publishers);       //only publishers (owner) can post items to this node
 
-        LeafNode leafNode = null;
-        String msg = "Test2";
-        String xmlMsg = "<message xmlns='pubsub:test:test'><body>" + msg + "</body></message>";
+        LeafNode leafNode;
+        String msg = "Test5";
+        Message message = new Message();
+        message.setStanzaId();
+        message.setSubject("Test");
+        message.setBody(msg);
         SimplePayload payload = new SimplePayload(
-                "test", "pubsub:test:test", xmlMsg);
-        PayloadItem<SimplePayload> item = new PayloadItem<>("5", payload);
+                null, null, message.toXML());
+        PayloadItem<SimplePayload> item = new PayloadItem<>(payload);
         try {
             leafNode = pubSubManager.getNode("testNode");
         } catch (XMPPException.XMPPErrorException e) {
@@ -57,10 +49,9 @@ public class Publisher {
     }
 
     public static void main(String[] args) {
-        Publisher publisher = null;
+        Publisher publisher;
         try {
-            publisher = new Publisher();
-            publisher.connect();
+            publisher = new Publisher("student2", "password");
             publisher.publish();
         } catch (InterruptedException | XMPPException | SmackException | IOException e) {
             e.printStackTrace();

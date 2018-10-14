@@ -11,20 +11,9 @@ import java.util.List;
 public class Subscriber implements ItemEventListener {
     private AbstractXMPPConnection conn;
 
-    public void connect() throws InterruptedException, XMPPException, SmackException, IOException {
-        InetAddress hostAddress = InetAddress.getByName("192.168.100.2");
-        SmackConfiguration.DEBUG = true;
-        // Create a connection to the jabber.org server on a specific port.
-        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                .setUsernameAndPassword("student2", "password")
-                .setXmppDomain("strathmore-computer")
-                .setHostAddress(hostAddress)
-                .setPort(5222)
-                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
-                .build();
-
-        conn = new XMPPTCPConnection(config);
-        conn.connect().login();
+    private Subscriber(String username, String password)
+            throws InterruptedException, IOException, SmackException, XMPPException {
+        conn = Util.connect(username, password);
     }
 
     private void subscribe() {
@@ -46,6 +35,7 @@ public class Subscriber implements ItemEventListener {
                     }
                 }
             }
+            while (true);
         } catch (InterruptedException | XMPPException | SmackException e) {
             e.printStackTrace();
         }
@@ -65,10 +55,9 @@ public class Subscriber implements ItemEventListener {
     }
 
     public static void main(String[] args) {
-        Subscriber subscriber = null;
+        Subscriber subscriber;
         try {
-            subscriber = new Subscriber();
-            subscriber.connect();
+            subscriber = new Subscriber("student1", "password");
             subscriber.subscribe();
         } catch (InterruptedException | XMPPException | SmackException | IOException e) {
             e.printStackTrace();
