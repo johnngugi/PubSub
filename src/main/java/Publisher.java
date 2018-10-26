@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 public class Publisher {
     private AbstractXMPPConnection conn;
@@ -81,52 +82,24 @@ public class Publisher {
         PayloadItem<SimplePayload> item = new PayloadItem<>("5", payload);
         try {
             leafNode = pubSubManager.getNode("testNode");
+            LeafNode finalLeafNode = leafNode;
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Scheduler scheduler = new Scheduler();
+                    scheduler.scheduleTask(finalLeafNode, TimeUnit.MINUTES, 1, item);
+                }
+            });
+            thread.start();
         } catch (XMPPException.XMPPErrorException | PubSubException.NotAPubSubNodeException e) {
             leafNode = (LeafNode) pubSubManager.createNode("testNode", form);
         }
-        leafNode.publish(item);
+//        leafNode.publish(item);
 
-//        if (filepath != null) {
-//            if (file.exists()) {
-//                FileTransferManager fileTransferManager = FileTransferManager.getInstanceFor(conn);
-//                OutgoingFileTransfer fileTransfer = fileTransferManager.createOutgoingFileTransfer(conn.getUser());
-//                try {
-//                    fileTransfer.sendFile(file, "Image");
-//                } catch (SmackException e) {
-//                    e.printStackTrace();
-//                }
-//                while (!fileTransfer.isDone()) {
-//                    if (fileTransfer.getStatus().equals(FileTransfer.Status.error)) {
-//                        System.out.println("Error!!!" + fileTransfer.getError());
-//                    } else if (fileTransfer.getStatus().equals(FileTransfer.Status.cancelled)
-//                            || fileTransfer.getStatus().equals(FileTransfer.Status.refused)) {
-//                        System.out.println("Cancelled!!!! " + fileTransfer.getError());
-//                    }
-//                    try {
-//                        Thread.sleep(1000L);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//                if (fileTransfer.getStatus().equals(FileTransfer.Status.cancelled)
-//                        || fileTransfer.getStatus().equals(FileTransfer.Status.refused)
-//                        || fileTransfer.getStatus().equals(FileTransfer.Status.error)) {
-//                    System.out.println("Refused or cancelled!!!" + fileTransfer.getError());
-//                } else {
-//                    System.out.println("Success");
-//                }
-//            }
-//        }
-
-//        try {
-//            leafNode = pubSubManager.getLeafNode("testNode");
-//            leafNode.deleteAllItems();
-//            pubSubManager.deleteNode("testNode");
-//        } catch (PubSubException.NotALeafNodeException e) {
-//            e.printStackTrace();
-//        } catch (PubSubException.NotAPubSubNodeException e) {
-//            e.printStackTrace();
-//        }
+        // Scheduling task
+//        LeafNode finalLeafNode = leafNode;
+//        Scheduler scheduler = new Scheduler();
+//        scheduler.scheduleTask(finalLeafNode, TimeUnit.MINUTES, 1, item);
     }
 
     public AbstractXMPPConnection getConn() {
